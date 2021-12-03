@@ -1,0 +1,7 @@
+<control>
+default_path=samples/
+<global>
+ampeg_release = 1
+<group>key=34
+<region> sample=A#1.wv
+
