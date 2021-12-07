@@ -73,69 +73,21 @@ extension AudioManager {
         
         do {
             let wav = try AVAudioFile(forReading: rawSampleURL)
-            guard let floatData = wav.toFloatChannelData() else {
-                fatalError("Error: Could not unwrap float data")
-            }
-            let leftChannelFloats = floatData[0]
-            let rightChannelFloats = floatData[1]
-            let interleavedCount: Int = leftChannelFloats.count + rightChannelFloats.count
-            var interleavedFloats = [Float](repeating: 0.0, count: interleavedCount)
-            for i in 0..<leftChannelFloats.count {
-                if i == 0 {
-                    interleavedFloats[i] = leftChannelFloats[i]
-                    interleavedFloats[i+1] = rightChannelFloats[i]
-                }
-                else {
-                    let iFloatIndex = i*2
-                    interleavedFloats[iFloatIndex] = leftChannelFloats[i]
-                    interleavedFloats[iFloatIndex+1] = rightChannelFloats[i]
-                }
-
-            }
-            
-            let floatPointer = UnsafeMutablePointer<Float>.init(mutating: interleavedFloats)
-            
-            let sampleRate = Float(Settings.sampleRate)
-            let desc = SampleDescriptor(noteNumber: 64,
-                                        noteFrequency: sampleRate/1000,
-                                        minimumNoteNumber: -1,
-                                        maximumNoteNumber: -1,
-                                        minimumVelocity: -1,
-                                        maximumVelocity: -1,
-                                        isLooping: false,
-                                        loopStartPoint: 0,
-                                        loopEndPoint: 1,
-                                        startPoint: 0,
-                                        endPoint: 0)
-            
-            let ddesc = SampleDataDescriptor(sampleDescriptor: desc,
-                                             sampleRate: sampleRate,
-                                             isInterleaved: true,
-                                             channelCount: 1,
-                                             sampleCount: Int32(interleavedFloats.count),
-                                             data: floatPointer)
-            rawSampler.loadRawSampleData(from: ddesc)
-            rawSampler.setLoop(thruRelease: true)
-            rawSampler.buildSimpleKeyMap()
+            rawSampler.loadAudioFile(file: wav, rootNote: 57, noteFrequency: 220)
             
         } catch {
             print("Error: Could not load 12345.wav")
         }
         
-        DispatchQueue.main.async {
-            let sfzPath = Bundle.main.bundlePath
-            self.sfzSampler = Sampler(sfzPath: sfzPath, sfzFileName: "testSFZ.sfz")
-            self.sfzSampler.masterVolume = 1.0
-//            self.sfzSampler.isMonophonic = 0.0
-//            self.sfzSampler.loopThruRelease = 0.0
-        }
-       
+        let sfzPath = Bundle.main.bundlePath
+        sfzSampler = Sampler(sfzPath: sfzPath, sfzFileName: "testSFZ.sfz")
+        sfzSampler.masterVolume = 1.0
     }
     
     func testSampler(with type:SamplerType) {
         switch type {
         case .rawSampler:
-            playRawSampler(note: MIDINoteNumber(42), velocity: MIDIVelocity(127), channel: MIDIChannel(0))
+            playRawSampler(note: MIDINoteNumber(57), velocity: MIDIVelocity(127), channel: MIDIChannel(0))
         case .sfzSampler:
             playSFZSampler(note: MIDINoteNumber(64), velocity: MIDIVelocity(127), channel: MIDIChannel(0))
         }
@@ -156,6 +108,5 @@ extension AudioManager {
     func stopRawSampler(note: MIDINoteNumber, channel: MIDIChannel) {
         rawSampler.stop(noteNumber: note, channel: channel)
     }
-    
 }
 
